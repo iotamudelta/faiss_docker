@@ -10,6 +10,8 @@ RUN echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/debian/ ubuntu main'
 RUN apt update
 RUN apt install -y rocm-dev5.7.0 rocm-libs5.7.0 build-essential libssl-dev swig numpy-stl
 
+COPY target.lst /opt/rocm/bin/
+
 # recent cmake required for FAISS 
 WORKDIR /root
 RUN wget https://github.com/Kitware/CMake/releases/download/v3.23.1/cmake-3.23.1.tar.gz && tar -zxvf cmake-3.23.1.tar.gz && cd cmake-3.23.1 && ./bootstrap && make -j && make install
