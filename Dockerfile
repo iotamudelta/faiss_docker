@@ -44,3 +44,8 @@ RUN git checkout wf32 #temporary
 RUN cmake -B build  -DFAISS_ENABLE_GPU=OFF -DFAISS_ENABLE_HIP=ON -DBLAS_LIBRARIES=/opt/blis/lib/libblis.so -DLAPACK_LIBRARIES=/opt/libflame/lib/libflame.so -DBUILD_TESTING=ON -DFAISS_HIP_WF32=ON .
 RUN make -C build -j faiss install
 # RUN make -C build test
+
+# make the python wrapper (work)
+RUN make -C build -j swigfaiss
+RUN apt install -y pip
+RUN (cd build/faiss/python && python3 setup.py install)
