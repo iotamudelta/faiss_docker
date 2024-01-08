@@ -29,6 +29,7 @@ RUN make install
 WORKDIR /root
 RUN git clone https://github.com/ROCmSoftwarePlatform/libflame
 WORKDIR libflame
+RUN git checkout rocm
 RUN ./configure --prefix=/opt/libflame --enable-lapack2flash --enable-vector-intrinsics=sse --enable-supermatrix --enable-hip --enable-blis-use-of-fla-malloc --enable-dynamic-build --enable-static-build --enable-verbose-make-output --enable-multithreading=pthreads --enable-lto
 RUN make -j
 RUN make install
