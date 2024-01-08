@@ -8,7 +8,7 @@ RUN apt update && apt install -y sudo wget gnupg2 git gcc gfortran libboost-dev 
 RUN wget -q -O - https://repo.radeon.com/rocm/rocm.gpg.key | sudo apt-key add -
 RUN echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/debian/ ubuntu main' | sudo tee /etc/apt/sources.list.d/rocm.list
 RUN apt update
-RUN apt install -y rocm-dev5.7.0 rocm-libs5.7.0 build-essential libssl-dev swig numpy-stl
+RUN apt install -y rocm-dev6.0.0 rocm-libs6.0.0 build-essential libssl-dev swig numpy-stl
 
 COPY target.lst /opt/rocm/bin/
 
@@ -42,9 +42,9 @@ WORKDIR /root
 RUN git clone https://github.com/iotamudelta/faiss
 WORKDIR faiss
 RUN git checkout wf32 #temporary
-RUN cmake -B build  -DFAISS_ENABLE_GPU=OFF -DFAISS_ENABLE_HIP=ON -DBLAS_LIBRARIES=/opt/blis/lib/libblis.so -DLAPACK_LIBRARIES=/opt/libflame/lib/libflame.so -DBUILD_TESTING=ON -DFAISS_HIP_WF32=ON .
+RUN cmake -B build  -DFAISS_ENABLE_GPU=OFF -DFAISS_ENABLE_HIP=ON -DBLAS_LIBRARIES=/opt/blis/lib/libblis.so -DLAPACK_LIBRARIES=/opt/libflame/lib/libflame.so -DBUILD_TESTING=ON -DFAISS_HIP_WF32=ON -DCMAKE_PREFIX_PATH=/opt/rocm .
 RUN make -C build -j faiss install
-# RUN make -C build test
+#RUN make -C build test
 
 # make the python wrapper (work)
 RUN make -C build -j swigfaiss
