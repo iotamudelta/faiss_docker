@@ -50,3 +50,13 @@ RUN make -C build -j faiss install
 RUN make -C build -j swigfaiss
 RUN apt install -y pip
 RUN (cd build/faiss/python && python3 setup.py install)
+
+# get rpd
+RUN apt install -y libfmt-dev
+WORKDIR /root
+RUN git clone https://github.com/ROCmSoftwarePlatform/rocmProfileData
+WORKDIR rocmProfileData
+RUN make
+RUN make install
+
+WORKDIR /root/faiss
