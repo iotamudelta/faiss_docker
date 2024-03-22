@@ -4,7 +4,7 @@ ENV TZ=America/Chicago
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN apt upgrade -y
-RUN apt update && apt install -y sudo wget gnupg2 git gcc gfortran libboost-dev bzip2 openmpi-bin flex build-essential bison libboost-all-dev vim libsqlite3-dev numactl sqlite3 gdb
+RUN apt update && apt install -y sudo wget gnupg2 git gcc gfortran libboost-dev bzip2 openmpi-bin flex build-essential bison libboost-all-dev vim libsqlite3-dev numactl sqlite3 gdb libgtest-dev
 RUN wget -q -O - https://repo.radeon.com/rocm/rocm.gpg.key | sudo apt-key add -
 RUN echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/debian/ ubuntu main' | sudo tee /etc/apt/sources.list.d/rocm.list
 RUN apt update
@@ -14,7 +14,7 @@ COPY target.lst /opt/rocm/bin/
 
 # recent cmake required for FAISS 
 WORKDIR /root
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.23.1/cmake-3.23.1.tar.gz && tar -zxvf cmake-3.23.1.tar.gz && cd cmake-3.23.1 && ./bootstrap && make -j && make install
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.29.0/cmake-3.29.0.tar.gz && tar -zxvf cmake-3.29.0.tar.gz && cd cmake-3.29.0 && ./bootstrap && make -j && make install
  
 # ROCm-enabled BLAS (BLIS)
 WORKDIR /root
@@ -39,17 +39,18 @@ RUN ldconfig
 
 # FAISS
 WORKDIR /root
-RUN git clone https://github.com/ROCm/faiss.git
+RUN git clone https://github.com/iotamudelta/faiss.git
 WORKDIR faiss
-RUN git checkout jeffdaily/rocm2 #temporary
-RUN cmake -B build  -DFAISS_ENABLE_GPU=OFF -DFAISS_ENABLE_HIP=ON -DBLAS_LIBRARIES=/opt/blis/lib/libblis.so -DLAPACK_LIBRARIES=/opt/libflame/lib/libflame.so -DBUILD_TESTING=ON -DFAISS_HIP_WF32=ON -DCMAKE_PREFIX_PATH=/opt/rocm .
+RUN git checkout rocm_support #temporary
+RUN ./faiss/gpu/hipify.sh
+RUN cmake -B build  -DFAISS_ENABLE_GPU=ON -DBLAS_LIBRARIES=/opt/blis/lib/libblis.so -DLAPACK_LIBRARIES=/opt/libflame/lib/libflame.so -DBUILD_TESTING=ON -DCMAKE_PREFIX_PATH=/opt/rocm -DFAISS_ENABLE_C_API=OFF -DFAISS_ENABLE_PYTHON=OFF .
 RUN make -C build -j faiss install
 #RUN make -C build test
 
 # make the python wrapper (work)
-RUN make -C build -j swigfaiss
-RUN apt install -y pip
-RUN (cd build/faiss/python && python3 setup.py install)
+#RUN make -C build -j swigfaiss
+#RUN apt install -y pp
+#RUN (cd build/faiss/python && python3 setup.py install)
 
 # get rpd
 RUN apt install -y libfmt-dev
