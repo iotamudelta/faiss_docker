@@ -1,3 +1,3 @@
 ### Container for AMD enabled FAISS.
 
-Currently limited to WF32.
+Works with WF32 and WF64.
