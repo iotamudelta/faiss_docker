@@ -6,7 +6,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt upgrade -y
 RUN apt update && apt install -y sudo wget gnupg2 git gcc gfortran libboost-dev bzip2 openmpi-bin flex build-essential bison libboost-all-dev vim libsqlite3-dev numactl sqlite3 gdb libgtest-dev
 
-#Rocm 6.1.1
+#ROCm 6.1.1
 RUN mkdir --parents --mode=0755 /etc/apt/keyrings
 RUN wget https://repo.radeon.com/rocm/rocm.gpg.key -O - | gpg --dearmor | sudo tee /etc/apt/keyrings/rocm.gpg > /dev/null
 RUN echo 'deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/6.1.1 jammy main' | sudo tee /etc/apt/sources.list.d/rocm.list
@@ -19,7 +19,7 @@ COPY target.lst /opt/rocm/bin/
 
 # recent cmake required for FAISS 
 WORKDIR /root
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.29.4/cmake-3.29.4.tar.gz && tar -zxvf cmake-3.29.4.tar.gz && cd cmake-3.29.4 && ./bootstrap && make -j && make install
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.24.4/cmake-3.24.4.tar.gz && tar -zxvf cmake-3.24.4.tar.gz && cd cmake-3.24.4 && ./bootstrap && make -j && make install
  
 # ROCm-enabled BLAS (BLIS)
 WORKDIR /root
