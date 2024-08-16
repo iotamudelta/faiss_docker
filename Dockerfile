@@ -1,19 +1,20 @@
 FROM ubuntu:22.04
-LABEL org.opencontainers.image.authors="johannes.dieterich@amd.com"
+LABEL org.opencontainers.image.authors="Michael.Pittard@amd.com"
 ENV TZ=America/Chicago
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN apt upgrade -y
 RUN apt update && apt install -y sudo wget gnupg2 git gcc gfortran libboost-dev bzip2 openmpi-bin flex build-essential bison libboost-all-dev vim libsqlite3-dev numactl sqlite3 gdb libgtest-dev
 
-#ROCm 6.1.1
+#ROCm 6.1.3
 RUN mkdir --parents --mode=0755 /etc/apt/keyrings
 RUN wget https://repo.radeon.com/rocm/rocm.gpg.key -O - | gpg --dearmor | sudo tee /etc/apt/keyrings/rocm.gpg > /dev/null
-RUN echo 'deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/6.1.1 jammy main' | sudo tee /etc/apt/sources.list.d/rocm.list
-RUN apt update && apt install -y rocm-dev6.1.1 rocm-libs6.1.1
+RUN echo 'deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/6.1.3 jammy main' | sudo tee /etc/apt/sources.list.d/rocm.list
+RUN apt update && apt install -y rocm-dev6.1.3 rocm-libs6.1.3
 
 RUN apt update && apt install -y build-essential libssl-dev swig python3
 RUN pip install pytest scipy numpy==1.23.5
+RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm6.1
 
 COPY target.lst /opt/rocm/bin/
 
@@ -44,11 +45,11 @@ RUN ldconfig
 
 # FAISS
 WORKDIR /root
-RUN git clone https://github.com/iotamudelta/faiss.git
+RUN git clone https://github.com/ItsPitt/faiss.git
 WORKDIR /root/faiss
-RUN git checkout rocm_support_squashed
+RUN git checkout main
 RUN faiss/gpu/hipify.sh
-RUN cmake -B build -DFAISS_ENABLE_GPU=ON -DBLAS_LIBRARIES=/opt/blis/lib/libblis.so -DLAPACK_LIBRARIES=/opt/libflame/lib/libflame.so -DBUILD_TESTING=ON -DFAISS_ENABLE_C_API=ON -DFAISS_ENABLE_PYTHON=ON -DCMAKE_PREFIX_PATH=/opt/rocm .
+RUN cmake -B build -DFAISS_ENABLE_GPU=ON -DFAISS_ENABLE_ROCM=ON -DBLAS_LIBRARIES=/opt/blis/lib/libblis.so -DLAPACK_LIBRARIES=/opt/libflame/lib/libflame.so -DBUILD_TESTING=ON -DFAISS_ENABLE_C_API=ON -DFAISS_ENABLE_PYTHON=ON -DCMAKE_PREFIX_PATH=/opt/rocm .
 RUN make -C build -j faiss
 
 # make the python wrapper
@@ -58,7 +59,11 @@ RUN make -C build -j install
 #RUN make -C build test
 
 RUN (cd build/faiss/python && python3 setup.py build)
-#RUN PYTHONPATH="$(ls -d ./build/faiss/python/build/lib*/)" pytest tests/test_*.py
+RUN cp tests/common_faiss_tests.py faiss/gpu-rocm/test/
+#RUN PYTHONPATH="$(ls -d ./build/faiss/python/build/lib*/)" pytest tests/test_*.py (passed)
+#RUN PYTHONPATH="$(ls -d ./build/faiss/python/build/lib*/)" pytest tests/torch_test_*.py (passed)
+#RUN PYTHONPATH="$(ls -d ./build/faiss/python/build/lib*/)" pytest faiss/gpu-rocm/test/test_*.py (2 fails)
+#RUN PYTHONPATH="$(ls -d ./build/faiss/python/build/lib*/)" pytest -v faiss/gpu-rocm/test/torch_test_contrib_gpu.py (0 fails after reorder)
 
 # get rpd
 RUN apt install -y libfmt-dev
