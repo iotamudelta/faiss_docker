@@ -6,11 +6,11 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt upgrade -y
 RUN apt update && apt install -y sudo wget gnupg2 git gcc gfortran libboost-dev bzip2 openmpi-bin flex build-essential bison libboost-all-dev vim libsqlite3-dev numactl sqlite3 gdb libgtest-dev
 
-#ROCm 6.1.3
+#ROCm 6.2.0
 RUN mkdir --parents --mode=0755 /etc/apt/keyrings
 RUN wget https://repo.radeon.com/rocm/rocm.gpg.key -O - | gpg --dearmor | sudo tee /etc/apt/keyrings/rocm.gpg > /dev/null
-RUN echo 'deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/6.1.3 jammy main' | sudo tee /etc/apt/sources.list.d/rocm.list
-RUN apt update && apt install -y rocm-dev6.1.3 rocm-libs6.1.3
+RUN echo 'deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/6.2 jammy main' | sudo tee /etc/apt/sources.list.d/rocm.list
+RUN apt update && apt install -y rocm-dev6.2.0 rocm-libs6.2.0
 
 RUN apt update && apt install -y build-essential libssl-dev swig python3
 RUN pip install pytest scipy numpy==1.23.5
@@ -47,9 +47,19 @@ RUN ldconfig
 WORKDIR /root
 RUN git clone https://github.com/ItsPitt/faiss.git
 WORKDIR /root/faiss
-RUN git checkout main
 RUN faiss/gpu/hipify.sh
-RUN cmake -B build -DFAISS_ENABLE_GPU=ON -DFAISS_ENABLE_ROCM=ON -DBLAS_LIBRARIES=/opt/blis/lib/libblis.so -DLAPACK_LIBRARIES=/opt/libflame/lib/libflame.so -DBUILD_TESTING=ON -DFAISS_ENABLE_C_API=ON -DFAISS_ENABLE_PYTHON=ON -DCMAKE_PREFIX_PATH=/opt/rocm .
+RUN cmake -B build \
+    -DFAISS_ENABLE_GPU=ON \
+    -DFAISS_ENABLE_ROCM=ON \
+    -DBLAS_LIBRARIES=/opt/blis/lib/libblis.so \
+    -DLAPACK_LIBRARIES=/opt/libflame/lib/libflame.so \
+    -DBUILD_TESTING=ON \
+    -DFAISS_ENABLE_C_API=ON \
+    -DFAISS_ENABLE_PYTHON=ON \
+    -DCMAKE_PREFIX_PATH=/opt/rocm \
+    #-DCMAKE_BUILD_TYPE=Release \
+    #-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    .
 RUN make -C build -j faiss
 
 # make the python wrapper
