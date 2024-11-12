@@ -17,7 +17,7 @@ RUN apt update && apt install -y rocm-dev6.2.2 rocm-libs6.2.2
 RUN pip install pytest scipy numpy==1.26.4
 
 # Install pyTorch
-RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm6.1
+RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm6.2
 
 COPY target.lst /opt/rocm/bin/
 
@@ -59,19 +59,17 @@ RUN cmake -B build \
     -DFAISS_ENABLE_C_API=ON \
     -DFAISS_ENABLE_PYTHON=ON \
     -DCMAKE_PREFIX_PATH=/opt/rocm \
+    -DBUILD_SHARED_LIBS=ON \
     #-DCMAKE_BUILD_TYPE=Release \
     #-DCMAKE_BUILD_TYPE=RelWithDebInfo \
     .
-RUN make -C build -j faiss
-
-# make the python wrapper
-RUN make -C build -j swigfaiss
-
-RUN make -C build -j install
+RUN make -k -C build -j$(nproc)
 #RUN make -C build test
 
+# Tests
 RUN (cd build/faiss/python && python3 setup.py build)
 RUN cp tests/common_faiss_tests.py faiss/gpu-rocm/test/
+#RUN make -C build test
 #RUN PYTHONPATH="$(ls -d ./build/faiss/python/build/lib*/)" pytest tests/test_*.py
 #RUN PYTHONPATH="$(ls -d ./build/faiss/python/build/lib*/)" pytest tests/torch_test_*.py
 #RUN PYTHONPATH="$(ls -d ./build/faiss/python/build/lib*/)" pytest faiss/gpu-rocm/test/test_*.py
